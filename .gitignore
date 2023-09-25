@@ -1,0 +1,7 @@
+venv/
+.idea/
+__pycache__/
+deletable_tests/
+chromedriver.exe
+ont_globals.py
+keys.json
