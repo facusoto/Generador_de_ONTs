@@ -18,6 +18,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 service = build('sheets', 'v4', credentials=creds)
 sheet = service.spreadsheets()
+archivo_registros = "registros.csv"
 
 
 # Obtener las contraseñas desde google sheets
@@ -56,11 +57,11 @@ def lectura_registros():
     regex_col2 = r'^.{44}$'
 
     # Lectura del archivo de registros
-    with open('registros.csv', 'r') as archivo_registros:
-        archivo_registros = csv.DictReader(archivo_registros)
+    with open('registros.csv', 'r') as registros_archivo:
+        registros_archivo = csv.DictReader(registros_archivo)
 
         # Encuentra las líneas con errores y los informa
-        for i, col in enumerate(archivo_registros, start=2):
+        for i, col in enumerate(registros_archivo, start=2):
             registro_control = col['registro']
             id_sheet_control = col['id']
 
@@ -91,6 +92,16 @@ def lectura_registros():
         return resultado
 
 
+def verificar_registro_existente(nombre_registro):
+    # Verifica si el registro ya existe en el archivo
+    with open(archivo_registros, 'r', newline='') as archivo:
+        reader = csv.reader(archivo)
+        for fila in reader:
+            if fila and fila[0] == nombre_registro:
+                return True
+    return False
+
+
 # Agregar nuevos registros al archivo
 def editar_registros():
     while True:
@@ -104,31 +115,34 @@ def editar_registros():
 
         # Validación del nombre del registro
         if re.match(r'^[a-zA-Z0-9]{1,5}$', nombre_registro):
-            break
+            # Verifica si el registro ya existe
+            if verificar_registro_existente(nombre_registro):
+                print(f"El registro '{nombre_registro}' ya existe en el archivo.")
+                continue
+
+            while True:
+                # Consulta el ID del registro
+                id_registro = input("Ingresa el ID del registro (44 caracteres), o escribe 'cancelar' para salir: ")
+
+                if id_registro.lower() == "cancelar":
+                    print("Proceso de edición de registros cancelado.")
+                    break
+
+                # Validación del ID del registro
+                if re.match(r'^.{44}$', id_registro):
+                    break
+                else:
+                    print("ID de registro no válido. Inténtalo nuevamente.")
+
+            # Agrega los valores al archivo de registros utilizando la biblioteca csv
+            with open(archivo_registros, 'a', newline='') as archivo:
+                writer = csv.writer(archivo)
+                writer.writerow([nombre_registro, id_registro])
+
+            print(f"Registro '{nombre_registro}' agregado correctamente.")
+            raise SystemExit
         else:
             print("Nombre de registro no válido. Inténtalo nuevamente.")
-
-    while True:
-        # Consulta el ID del registro
-        id_registro = input("Ingresa el ID del registro (44 caracteres), o escribe 'cancelar' para salir: ")
-
-        if id_registro.lower() == "cancelar":
-            print("Proceso de edición de registros cancelado.")
-            break
-
-        # Validación del ID del registro
-        if re.match(r'^.{44}$', id_registro):
-            break
-        else:
-            print("ID de registro no válido. Inténtalo nuevamente.")
-
-    # Agrega los valores al archivo de registros utilizando la biblioteca csv
-    with open('registros.csv', 'a', newline='') as archivo:
-        writer = csv.writer(archivo)
-        writer.writerow([nombre_registro, id_registro])
-
-    print(f"Registro '{nombre_registro}' agregado correctamente.")
-    raise SystemExit
 
 
 # Ejecutar las clases para configurar los modems
