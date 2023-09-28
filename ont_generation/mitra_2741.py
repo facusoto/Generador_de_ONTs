@@ -38,7 +38,8 @@ class Init2741:
         self.wifiMod5g = wifiMod5g
 
         # Configuración de datos obtenidos
-        self.output_data = None
+        self.gpon = None
+        self.mac = None
         self.potencia = None
         self.output_pass = None
         self.base_frame = None
@@ -48,8 +49,8 @@ class Init2741:
         driver = self.driver
         # Ingreso, verificación de potencia y subida de datos de modem
         try:
-            driver.get('http://192.168.1.100/cgi-bin/logIn_mhs.cgi')
-            print("Ingresando a 192.168.1.100")
+            driver.get('http://192.168.1.1/cgi-bin/logIn_mhs.cgi')
+            print("Ingresando a 192.168.1.1")
 
         except WebDriverException as e:
             # Verifica si el mensaje de error contiene "ERR_CONNECTION_TIMED_OUT"
@@ -78,10 +79,8 @@ class Init2741:
                 potencia_element = driver.find_element_by_xpath('//*[@id="opticalRX"]').text
 
                 # Formatea las cadenas de texto de manera más clara
-                modelo = "MODELO: Mitrastar 2741\n"
-                gpon_replaced = f"GPON SN: <{gpon_element.replace('-', '')}>\n"
-                mac_replaced = f"MAC: {mac_element.replace(':', '')}"
-                self.output_data = [[modelo + gpon_replaced + mac_replaced]]
+                self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+                self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
                 # Obtiene el valor de potencia, si es 40 lo reemplaza por 0
                 self.potencia = 0 if int(''.join(filter(str.isdigit, potencia_element))[:3]) == 40 else int(''.join(filter(str.isdigit, potencia_element))[:3])
@@ -107,16 +106,16 @@ class Init2741:
                         # Se imprime que se obtuvieron los datos solo si pasa la prueba de la potencia
                         print("¡Datos de modem obtenidos!")
 
-                return self.output_data, self.potencia
+                return self.gpon, self.mac, self.potencia
 
             except TimeoutException:
                 print("No se pudo acceder y obtener los datos")
 
     def ont_progress(self):
 
-        # Ingreso a la página 192.168.1.100:8000
+        # Ingreso a la página 192.168.1.1:8000
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/cgi-bin/logIn_main.cgi')
+        driver.get('http://192.168.1.1:8000/cgi-bin/logIn_main.cgi')
 
         # Ventana de ingreso
         user = driver.find_element_by_name("username")
@@ -178,7 +177,7 @@ class Init2741:
 
     def cambios_varios(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/cgi-bin/indexmain.cgi')
+        driver.get('http://192.168.1.1:8000/cgi-bin/indexmain.cgi')
 
         # Frame Menu (Network Interface)
         network_interface = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="network"]')))
@@ -303,7 +302,7 @@ class Init2741:
 
     def cambio_2g(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/cgi-bin/indexmain.cgi')
+        driver.get('http://192.168.1.1:8000/cgi-bin/indexmain.cgi')
 
         # Frame Menu (Network Interface)
         network_interface = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="network"]')))
@@ -391,7 +390,7 @@ class Init2741:
 
     def cambio_5g(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/cgi-bin/indexmain.cgi')
+        driver.get('http://192.168.1.1:8000/cgi-bin/indexmain.cgi')
 
         # Frame Menu (Network Interface)
         network_interface = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="network"]')))
@@ -455,7 +454,7 @@ class Init2741:
     def cambio_contrasena(self):
         driver = self.driver
         tecnico = 'Tecnico2018'
-        driver.get('http://192.168.1.100:8000/cgi-bin/indexmain.cgi')
+        driver.get('http://192.168.1.1:8000/cgi-bin/indexmain.cgi')
 
         # Frame Menu (Maintenance Interface)
         maintenance_interface = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="maintenance"]')))

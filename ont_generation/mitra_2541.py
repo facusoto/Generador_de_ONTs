@@ -38,7 +38,8 @@ class Init2541:
         self.wifiMod5g = wifiMod5g
 
         # Configuración de datos obtenidos
-        self.output_data = None
+        self.gpon = None
+        self.mac = None
         self.potencia = None
         self.output_pass = None
         self.base_frame = None
@@ -49,9 +50,8 @@ class Init2541:
         driver = self.driver
         # Ingreso, verificación de potencia y subida de datos de modem
         try:
-            print('\t>Version de pruebas, no olvides deshacer los cambios y borrar este mensaje! (POTENCIA)')
-            driver.get('http://192.168.1.100')
-            print("Ingresando a 192.168.1.100")
+            driver.get('http://192.168.1.1')
+            print("Ingresando a 192.168.1.1")
 
         except WebDriverException as e:
             # Verifica si el mensaje de error contiene "ERR_CONNECTION_TIMED_OUT"
@@ -99,16 +99,9 @@ class Init2541:
                 print("No se pudo acceder y obtener los datos")
 
             # Formatea las cadenas de texto de manera más clara
-            modelo = "MODELO: Mitrastar 2541\n"
-            gpon_replaced = f"GPON SN: <{gpon_element.replace('-', '')}>\n"
-            mac_replaced = f"MAC: {mac_element.replace(':', '')}"
-            self.output_data = [[modelo + gpon_replaced + mac_replaced]]
-
+            self.gpon = f"{gpon_element.upper().replace('-', '')}"
+            self.mac = f"{mac_element.upper().replace(':', '')}"
             self.potencia = int(''.join(filter(str.isdigit, potencia_element))[:3])
-
-            # BORRAR!
-            if self.potencia == 0:
-                self.potencia = 210
 
             # Verifica si no hay potencia y hace un break
             for cuenta in range(1):
@@ -131,12 +124,12 @@ class Init2541:
                     # Se imprime que se obtuvieron los datos solo si pasa la prueba de la potencia
                     print("¡Datos de modem obtenidos!")
 
-            return self.output_data, self.potencia
+            return self.gpon, self.mac, self.potencia
 
     def ont_progress(self):
-        # Ingreso a la página 192.168.1.100:8000
+        # Ingreso a la página 192.168.1.1:8000
         driver = self.driver
-        driver.get('http://192.168.1.100/logIn_main.html')
+        driver.get('http://192.168.1.1/logIn_main.html')
 
         # Ingresando a configuración avanzada
         user = driver.find_element_by_name("user")
@@ -150,7 +143,7 @@ class Init2541:
 
     def cambio_wan(self):
         driver = self.driver
-        new_url = 'http://192.168.1.100:8000/wancfg.cmd'
+        new_url = 'http://192.168.1.1:8000/wancfg.cmd'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -216,7 +209,7 @@ class Init2541:
 
         # ---------------------------
         # Configuración de DNS Server
-        new_url = 'http://192.168.1.100:8000/dnscfg.html'
+        new_url = 'http://192.168.1.1:8000/dnscfg.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -240,7 +233,7 @@ class Init2541:
 
         # ---------------------
         # Configuración de UPNP
-        new_url = 'http://192.168.1.100:8000/upnpcfg.html'
+        new_url = 'http://192.168.1.1:8000/upnpcfg.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -259,7 +252,7 @@ class Init2541:
 
         # ---------------------
         # Configuración de IPv6
-        new_url = 'http://192.168.1.100:8000/ipv6lancfg.html'
+        new_url = 'http://192.168.1.1:8000/ipv6lancfg.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -279,7 +272,7 @@ class Init2541:
 
     def cambio_2g(self):
         driver = self.driver
-        new_url = 'http://192.168.1.100:8000/wlcfg.html'
+        new_url = 'http://192.168.1.1:8000/wlcfg.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -298,7 +291,7 @@ class Init2541:
         apply2g.click()
 
         # Ir a la página de seguridad
-        new_url = 'http://192.168.1.100:8000/wlsecurity.html'
+        new_url = 'http://192.168.1.1:8000/wlsecurity.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -333,7 +326,7 @@ class Init2541:
 
     def cambio_5g(self):
         driver = self.driver
-        new_url = 'http://192.168.1.100:8000/wlextcfg.html'
+        new_url = 'http://192.168.1.1:8000/wlextcfg.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -357,7 +350,7 @@ class Init2541:
 
     def cambio_contrasena(self):
         driver = self.driver
-        new_url = 'http://192.168.1.100:8000/password.html'
+        new_url = 'http://192.168.1.1:8000/password.html'
 
         # Obtener el frame, cambiar su URL y hacerle Switch
         driver.switch_to.default_content()
@@ -370,8 +363,8 @@ class Init2541:
             try:
                 driver.find_element_by_name("userName").send_keys("admin")
                 driver.find_element_by_name("pwdOld").send_keys(self.contrasenaMod)
-                driver.find_element_by_name("pwdNew").send_keys("Tecnico2018")
-                driver.find_element_by_name("pwdCfm").send_keys("Tecnico2018")
+                driver.find_element_by_name("pwdNew").send_keys(tecnico)
+                driver.find_element_by_name("pwdCfm").send_keys(tecnico)
 
             except NoSuchElementException:
                 print("Error, no encontrado (?")

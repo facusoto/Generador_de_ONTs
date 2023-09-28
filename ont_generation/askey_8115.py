@@ -37,7 +37,8 @@ class Init8115:
         self.wifiMod5g = wifiMod5g
 
         # Configuración de datos obtenidos
-        self.output_data = None
+        self.gpon = None
+        self.mac = None
         self.potencia = None
         self.output_pass = None
         self.numero_aleatorio = random.randint(10000000, 99999999)
@@ -47,9 +48,9 @@ class Init8115:
         # Ingreso, verificación de potencia y subida de datos de modem
         try:
             # print('\t>Version de pruebas, no olvides deshacer los cambios y borrar este mensaje! (POTENCIA)')
-            driver.get('http://192.168.2.1/te_info.asp')
+            driver.get('http://192.168.1.1/te_info.asp')
             driver.delete_all_cookies()
-            print("Ingresando a 192.168.2.1")
+            print("Ingresando a 192.168.1.1")
 
         except WebDriverException as e:
             # Verifica si el mensaje de error contiene "ERR_CONNECTION_TIMED_OUT"
@@ -63,10 +64,8 @@ class Init8115:
             mac_element = driver.find_element_by_xpath('//*[@id="tdMac"]').text
 
             # Formatea las cadenas de texto de manera más clara
-            modelo = "MODELO: Askey 8115\n"
-            gpon_replaced = f"GPON SN: <{gpon_element.replace('-', '')}>\n"
-            mac_replaced = f"MAC: {mac_element.replace(':', '')}"
-            self.output_data = [[modelo + gpon_replaced + mac_replaced]]
+            self.gpon = f"{gpon_element.upper().replace('-', '')}"
+            self.mac = f"{mac_element.upper().replace(':', '')}"
 
             # Setear valores para ciclo que obtenga un valor correcto de potencia
             sin_potencia = "--- dBm"
@@ -88,7 +87,7 @@ class Init8115:
 
             # Si no se obtuvo la potencia (y, por lo tanto, continúa en None) la establece en 0
             if self.potencia is None:
-                self.potencia = 220
+                self.potencia = 0
 
             # Verifica si no hay potencia y hace un break
             for cuenta in range(1):
@@ -111,16 +110,16 @@ class Init8115:
                     # Se imprime que se obtuvieron los datos solo si pasa la prueba de la potencia
                     print("¡Datos de modem obtenidos!")
 
-            return self.output_data, self.potencia
+            return self.gpon, self.mac, self.potencia
 
         except TimeoutException:
             print("No se pudo acceder y obtener los datos")
 
     def ont_progress(self):
 
-        # Ingreso a la página 192.168.2.1:8000
+        # Ingreso a la página 192.168.1.1:8000
         driver = self.driver
-        driver.get('http://192.168.2.1:8000/')
+        driver.get('http://192.168.1.1:8000/')
 
         # Ventana de ingreso
         user = driver.find_element_by_name("Username")
@@ -137,13 +136,13 @@ class Init8115:
     def cambio_contrasena(self):
         driver = self.driver
         tecnico = 'Tecnico2018'
-        driver.get('http://192.168.2.1:8000/user_profile.asp')
+        driver.get('http://192.168.1.1:8000/user_profile.asp')
 
         if self.contrasenaMod != tecnico:
             self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="pwdOld"]')))
             driver.find_element_by_id("pwdOld").send_keys(self.contrasenaMod)
-            driver.find_element_by_id("pwdNew").send_keys('Tecnico2018')
-            driver.find_element_by_id("pwdConfirm").send_keys('Tecnico2018')
+            driver.find_element_by_id("pwdNew").send_keys(tecnico)
+            driver.find_element_by_id("pwdConfirm").send_keys(tecnico)
 
             driver.find_element_by_id("btnSaveApply").click()
 
@@ -161,7 +160,7 @@ class Init8115:
 
     def cambio_wan(self):
         driver = self.driver
-        driver.get('http://192.168.2.1:8000/wanintf.asp')
+        driver.get('http://192.168.1.1:8000/wanintf.asp')
 
         # Obtiene la cantidad total de IP services
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr/td[1]/input')))
@@ -228,7 +227,7 @@ class Init8115:
 
         # ---------------------
         # Configuración de IPv6
-        driver.get('http://192.168.2.1:8000/ipv6.asp')
+        driver.get('http://192.168.1.1:8000/ipv6.asp')
 
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//input[@type="radio" and @value="0"]')))
         elementos = driver.find_elements_by_xpath('//input[@type="radio" and @value="0"]')
@@ -247,7 +246,7 @@ class Init8115:
 
         # --------------------
         # Configuración de RIP
-        driver.get('http://192.168.2.1:8000/rip.asp')
+        driver.get('http://192.168.1.1:8000/rip.asp')
 
         try:
             checkbox = driver.find_element_by_xpath('//td[2]//input[@type="checkbox" and not(@checked)]')
@@ -264,7 +263,7 @@ class Init8115:
 
         for i in valores:
             # Ingreso de la URL mudada
-            driver.get('http://192.168.2.1:8000/dnsrelay.asp#1')
+            driver.get('http://192.168.1.1:8000/dnsrelay.asp#1')
 
             # Agregar configuración, espera cautelosa
             self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="AddStaticDnsRelay"]')))
@@ -289,7 +288,7 @@ class Init8115:
 
         # ------------------------------
         # Configuración UPN y WAN Mirror
-        urls = ['http://192.168.2.1:8000/upnp.asp', 'http://192.168.2.1:8000/diagsw.asp']
+        urls = ['http://192.168.1.1:8000/upnp.asp', 'http://192.168.1.1:8000/diagsw.asp']
 
         for url in urls:
             # Navegar a la página web deseada
@@ -304,7 +303,7 @@ class Init8115:
 
         # ---------------------
         # Configuración de DHCP
-        driver.get('http://192.168.2.1:8000/dhcp.asp')
+        driver.get('http://192.168.1.1:8000/dhcp.asp')
 
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[1]/td[2]/a')))
         dhcp = driver.find_element_by_xpath('//tr[1]/td[2]/a')
@@ -337,7 +336,7 @@ class Init8115:
 
     def cambio_2g(self):
         driver = self.driver
-        driver.get('http://192.168.2.1:8000/wifi.asp')
+        driver.get('http://192.168.1.1:8000/wifi.asp')
 
         # Seleccionar Bandwith (Espera cautelosa)
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@name="adm_bandwidth"]')))
@@ -383,7 +382,7 @@ class Init8115:
 
     def cambio_5g(self):
         driver = self.driver
-        driver.get('http://192.168.2.1:8000/wifi5g.asp')
+        driver.get('http://192.168.1.1:8000/wifi5g.asp')
 
         # Seleccionar Channel (Espera cautelosa)
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@name="adm_channel"]')))

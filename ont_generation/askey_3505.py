@@ -35,7 +35,8 @@ class Init3505:
         self.wifiMod5g = wifiMod5g
 
         # Configuración de datos obtenidos
-        self.output_data = None
+        self.gpon = None
+        self.mac = None
         self.potencia = None
         self.output_pass = None
         self.numero_aleatorio = random.randint(10000000, 99999999)
@@ -45,8 +46,8 @@ class Init3505:
         # Ingreso, verificación de potencia y subida de datos de modem
         try:
             driver.delete_all_cookies()
-            driver.get('http://192.168.1.100/')
-            print("Ingresando a 192.168.1.100")
+            driver.get('http://192.168.1.1/')
+            print("Ingresando a 192.168.1.1")
 
         except WebDriverException as e:
             # Verifica si el mensaje de error contiene "ERR_CONNECTION_TIMED_OUT"
@@ -77,7 +78,7 @@ class Init3505:
 
         # Verificar si se puede cambiar de página, si no se puede la contraseña es incorrecta
         try:
-            driver.get('http://192.168.1.100/te_info.html')
+            driver.get('http://192.168.1.1/te_info.html')
 
         except UnexpectedAlertPresentException:
             print('La contraseña introducida es incorrecta, por favor verificala')
@@ -107,10 +108,8 @@ class Init3505:
             print("No se pudo acceder y obtener los datos")
 
         # Formatea las cadenas de texto de manera más clara
-        modelo = "MODELO: Askey 3505\n"
-        gpon_replaced = f"GPON SN: <{gpon_element.replace('-', '')}>\n"
-        mac_replaced = f"MAC: {mac_element.replace(':', '')}"
-        self.output_data = [[modelo + gpon_replaced + mac_replaced]]
+        self.gpon = f"{gpon_element.upper().replace('-', '')}"
+        self.mac = f"{mac_element.upper().replace(':', '')}"
 
         # Formatea la potencia
         if potencia_element != sin_potencia:
@@ -139,11 +138,11 @@ class Init3505:
                 # Se imprime que se obtuvieron los datos solo si pasa la prueba de la potencia
                 print("¡Datos de modem obtenidos!")
 
-        return self.output_data, self.potencia
+        return self.gpon, self.mac, self.potencia
 
     def ont_progress(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/')
+        driver.get('http://192.168.1.1:8000/')
 
         # Ventana de ingreso
         try:
@@ -169,7 +168,7 @@ class Init3505:
 
     def cambio_contrasena(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/password.html')
+        driver.get('http://192.168.1.1:8000/password.html')
         tecnico = "Tecnico2018"
 
         # Frame Menu (Management)
@@ -188,7 +187,7 @@ class Init3505:
 
     def cambio_wan(self):
         driver = self.driver
-        driver.get('http://192.168.1.100:8000/wancfg.cmd')
+        driver.get('http://192.168.1.1:8000/wancfg.cmd')
 
         # Eliminar configuración previa
         try:
@@ -249,7 +248,7 @@ class Init3505:
 
         # ---------------------
         # Configuración de IPv6
-        driver.get('http://192.168.1.100:8000/ipv6lancfg.html')
+        driver.get('http://192.168.1.1:8000/ipv6lancfg.html')
 
         # Buscar elementos input de tipo checkbox excluyendo 'enableRadvdUla'
         checkboxes = driver.find_elements_by_xpath('//input[@type="checkbox" and not(@name="enableRadvdUla")]')
@@ -267,7 +266,7 @@ class Init3505:
 
         # ---------------------
         # Configuración de DHCP
-        driver.get('http://192.168.1.100:8000/adminlancfg.html')
+        driver.get('http://192.168.1.1:8000/adminlancfg.html')
 
         # Habilitar radio DHCP
         dhcp_enable = driver.find_element_by_xpath('//*[@id="dhcpInfo"]/table[1]/tbody/tr[2]/td/input')
@@ -286,7 +285,7 @@ class Init3505:
 
         # --------------------------
         # Configuración de IP Filter
-        driver.get('http://192.168.1.100:8000/scbidirectionalflt.cmd?action=view')
+        driver.get('http://192.168.1.1:8000/scbidirectionalflt.cmd?action=view')
 
         # Selecciona el primer elemento y edita
         driver.find_element_by_xpath("//tr[2]/td[6]/input").click()
@@ -301,7 +300,7 @@ class Init3505:
 
         # --------------------
         # Configuración de DNS
-        driver.get('http://192.168.1.100:8000/dnscfg.html')
+        driver.get('http://192.168.1.1:8000/dnscfg.html')
 
         # Habilitar radio DNS
         dns_enable = driver.find_element_by_xpath("//table[3]/tbody/tr[1]/td/input")
@@ -323,7 +322,7 @@ class Init3505:
 
         # ------------------------
         # Ir a la página principal
-        driver.get('http://192.168.1.100:8000/te_wifi.html')
+        driver.get('http://192.168.1.1:8000/te_wifi.html')
 
         # Cambiar nombre SSID
         self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@name='SSIDName']")))
@@ -373,12 +372,12 @@ class Init3505:
         # ---------------------------------------------------------
         # Ir a la página de avanzadas y verificar que sea accesible
         while True:
-            response = requests.get('http://192.168.1.100:8000/wlcfgadv.html')
+            response = requests.get('http://192.168.1.1:8000/wlcfgadv.html')
 
             if "try again in a few minutes" in response.text:
                 time.sleep(1)
             else:
-                driver.get('http://192.168.1.100:8000/wlcfgadv.html')
+                driver.get('http://192.168.1.1:8000/wlcfgadv.html')
 
                 # Selecciona el canal
                 default_action = Select(driver.find_element_by_name("wlChannel"))
@@ -400,12 +399,12 @@ class Init3505:
         # ------------------------
         # Ir a la página principal
         while True:
-            response = requests.get('http://192.168.1.100:8000/te_wifi_5ghz.html')
+            response = requests.get('http://192.168.1.1:8000/te_wifi_5ghz.html')
 
             if "try again in a few minutes" in response.text:
                 time.sleep(1)
             else:
-                driver.get('http://192.168.1.100:8000/te_wifi_5ghz.html')
+                driver.get('http://192.168.1.1:8000/te_wifi_5ghz.html')
 
                 # Cambiar nombre SSID
                 self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@name='SSIDName']")))

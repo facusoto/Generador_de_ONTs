@@ -1,5 +1,5 @@
-import csv
 import re
+import csv
 import psutil
 import subprocess
 
@@ -22,26 +22,27 @@ archivo_registros = "registros.csv"
 
 
 # Obtener las contraseñas desde google sheets
-def sheets_ont_passes(sheet_id, start, end):
+def sheets_ont_passes(registro, sheet_id, start, end):
     try:
-        result = sheet.values().get(spreadsheetId=sheet_id, range=f'Modems!E{start}:E{end}').execute()
+        result = sheet.values().get(spreadsheetId=sheet_id, range=f'{registro}!E{start}:E{end}').execute()
         return result['values']
     except Exception as e:
         print('Error, no se pudo conectar al servidor de Google Sheets. Revisa tu conexión y vuelve a intentarlo')
+        print(e)
         raise SystemExit
 
 
 # Google sheets, grabación de datos
-def update_data(sheet_id, number, output_data):
+def update_data(registro, column, sheet_id, number, output_data):
     sheet.values().update(spreadsheetId=sheet_id,
-                          range=f'Modems!D{number+1}', valueInputOption="USER_ENTERED",
+                          range=f'{registro}!{column}{number+1}', valueInputOption="USER_ENTERED",
                           body={"values": output_data}).execute()
 
 
 # Google sheets, grabación de contraseña
-def update_pass(sheet_id, number, column, output_pass):
+def update_pass(registro, sheet_id, number, column, output_pass):
     sheet.values().update(spreadsheetId=sheet_id,
-                          range=f'Modems!{column}{number+1}', valueInputOption="USER_ENTERED",
+                          range=f'{registro}!{column}{number+1}', valueInputOption="USER_ENTERED",
                           body={"values": output_pass}).execute()
 
 
@@ -107,7 +108,7 @@ def editar_registros():
     while True:
         # Consulta el nombre del registro
         nombre_registro = input(
-            "Ingresa el nombre del registro (máximo 5 letras o números), o escribe 'cancelar' para salir: ")
+            "Ingresa el nombre del registro (máximo 5 letras o números), o escribe 'cancelar' para salir: ").upper()
 
         if nombre_registro.lower() == "cancelar":
             print("Proceso de edición de registros cancelado.")
@@ -120,19 +121,8 @@ def editar_registros():
                 print(f"El registro '{nombre_registro}' ya existe en el archivo.")
                 continue
 
-            while True:
-                # Consulta el ID del registro
-                id_registro = input("Ingresa el ID del registro (44 caracteres), o escribe 'cancelar' para salir: ")
-
-                if id_registro.lower() == "cancelar":
-                    print("Proceso de edición de registros cancelado.")
-                    break
-
-                # Validación del ID del registro
-                if re.match(r'^.{44}$', id_registro):
-                    break
-                else:
-                    print("ID de registro no válido. Inténtalo nuevamente.")
+            # No me gusta hard setear pero ya no tengo ganas de nada
+            id_registro = '11PuPnHXS1jk4gJ_s1rE88eByFfmZGMT9uHL9g5AbD1I'
 
             # Agrega los valores al archivo de registros utilizando la biblioteca csv
             with open(archivo_registros, 'a', newline='') as archivo:
@@ -147,16 +137,16 @@ def editar_registros():
 
 # Ejecutar las clases para configurar los modems
 def ont_config(sheet_id, modem_number, ontpass, registro, model):
-    wifi2g = "FibrAzul_" + registro.upper() + str(modem_number)
-    wifi5g = "FibrAzul5Ghz_" + registro.upper() + str(modem_number)
+    wifi2g = "FibrAzul_" + registro + str(modem_number)
+    wifi5g = "FibrAzul_5Ghz_" + registro + str(modem_number)
 
     # Crear un diccionario para mapear modelos a sus detalles
     modelo_detalles = {
-        1: {"Modelo": "Askey 8115", "Wan service": f"askey{registro}{modem_number}", "Clase": Init8115},
-        2: {"Modelo": "Askey 3505", "Wan service": f"askey{registro}{modem_number}", "Clase": Init3505},
-        3: {"Modelo": "Mitra 2541", "Wan service": f"mitra{registro}{modem_number}", "Clase": Init2541},
-        4: {"Modelo": "Mitra 2741", "Wan service": f"mitra{registro}{modem_number}", "Clase": Init2741},
-        5: {"Modelo": "ZTE", "Wan service": f"zte{registro}{modem_number}", "Clase": InitZTE}
+        1: {"Modelo": "Askey 8115", "Wan service": f"askey{registro.lower()}{modem_number}", "Clase": Init8115},
+        2: {"Modelo": "Askey 3505", "Wan service": f"askey{registro.lower()}{modem_number}", "Clase": Init3505},
+        3: {"Modelo": "Mitra 2541", "Wan service": f"mitra{registro.lower()}{modem_number}", "Clase": Init2541},
+        4: {"Modelo": "Mitra 2741", "Wan service": f"mitra{registro.lower()}{modem_number}", "Clase": Init2741},
+        5: {"Modelo": "ZTE", "Wan service": f"zte{registro.lower()}{modem_number}", "Clase": InitZTE}
     }
 
     # Imprimir datos del módem basado en el modelo
@@ -176,60 +166,60 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
         # Crea una instancia de la clase correspondiente, ejecuta la configuración y obtiene los datos
         configurador = detalles["Clase"](modem_number, ontpass, detalles["Wan service"], wifi2g, wifi5g)
 
-        # Si el modelo es un ZTE usa otros métodos
-        if model == 5:
-            try:
-                configurador.ont_progress()
-                configurador.upload_configuration()
-                configurador.localnet_config()
-                configurador.internet_config()
-                configurador.cambio_contrasena()
+        # Método para obtener los datos del modelo
+        resultado = configurador.obtener_datos()
 
-                # Finalizar el proceso de Selenium tras finalizar
-                configurador.kill()
-
-            except Exception as e:
-                print(f'Ocurrió un error: {e}')
+        # Verifica que el reultado no sea None, causas probables: Contraseña erronea.
+        if resultado is None:
+            print("Proceso interrumpido: No se obtuvieron valores del módem.")
 
         else:
-            # Método para obtener los datos del modelo
-            resultado = configurador.obtener_datos()
+            # Separar los datos obtenidos en distintas variables
+            sn, mac, potencia = resultado
 
-            # Verifica que el reultado no sea None, causas probables: Contraseña erronea.
-            if resultado is not None:
-                # Separa los datos obtenidos en distintas variables
-                output_data = resultado[0]
-                potencia = resultado[1]
+            # Ejecutar el programa si la potencia está dentro de un intervalo aceptable
+            if 0 < potencia < 245:
+                # Almacenar datos en Google Sheets
+                column_values = ['D', 'F']
+                for column in column_values:
+                    update_data(registro, column, sheet_id, modem_number, sn if column == 'D' else mac)
 
-                # Ejecuta el programa si la potencia está dentro de un intervalo aceptable
-                if 0 < potencia < 245:
-                    # Almacenar datos en google sheets
-                    update_data(sheet_id, modem_number, output_data)
+                # Agregar que se trata de un modelo 8115 en el registro
+                set_8115 = [['True']]
+                if model == 1:
+                    update_pass(registro, sheet_id, modem_number, 'G', set_8115)
 
-                    # Continuar con la ejecución
+                # Continuar con la ejecución
+                if model != 5:
                     configurador.ont_progress()
                     configurador.cambio_wan()
                     configurador.cambios_varios()
 
-                    # Obtener contraseña wifi de fábrica y la generada aleatoreamente
-                    column_values = ['L', 'M']
+                # Obtener contraseña wifi de fábrica y la generada aleatoriamente
+                column_values = ['E', 'C']
+
+                if model != 5:
                     output_pass = configurador.cambio_2g()
+                else:
+                    output_pass = configurador.localnet_config()
 
-                    # Iterar a través de column_values y usar output_pass[0] para 'L' y output_pass[1] para 'M'
-                    # Es decir, graba las contraseñas en distintas columnas
-                    for column in column_values:
-                        update_pass(sheet_id, modem_number, column, output_pass[column_values.index(column)])
+                # Iterar a través de column_values y usar output_pass[0] para 'E' y output_pass[1] para 'C'
+                for column in column_values:
+                    update_pass(registro, sheet_id, modem_number, column, output_pass[column_values.index(column)])
 
+                if model != 5:
+                    configurador.cambio_5g()
+                else:
+                    configurador.internet_config()
+
+                # Repetir el cambio del 5g si es un 3505
+                if model == 2:
                     configurador.cambio_5g()
 
-                    # Repite el cambio del 5g si es un 3505
-                    if model == 2:
-                        configurador.cambio_5g()
+                configurador.cambio_contrasena()
 
-                    configurador.cambio_contrasena()
-
-                    # Finalizar el proceso de Selenium tras finalizar
-                    configurador.kill()
+                # Finalizar el proceso de Selenium tras finalizar
+                configurador.kill()
             else:
                 print("Proceso interrumpido: Potencia del modem demasiado alta.")
     else:
@@ -323,9 +313,10 @@ def configurar_marco_trabajo(reg_dict):
 
     start = (first_modem + 1)
     end = (first_modem + cantidad)
+    registro = registro.upper()
 
     # Obtención de contraseñas desde sheets
-    ont_passes = sheets_ont_passes(sheet_id, start, end)
+    ont_passes = sheets_ont_passes(registro, sheet_id, start, end)
 
     # Comprobar que la request contiene contraseñas
     if not ont_passes:
