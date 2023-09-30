@@ -108,8 +108,8 @@ class Init3505:
             print("No se pudo acceder y obtener los datos")
 
         # Formatea las cadenas de texto de manera más clara
-        self.gpon = f"{gpon_element.upper().replace('-', '')}"
-        self.mac = f"{mac_element.upper().replace(':', '')}"
+        self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+        self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
         # Formatea la potencia
         if potencia_element != sin_potencia:

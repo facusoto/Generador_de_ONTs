@@ -25,7 +25,13 @@ archivo_registros = "registros.csv"
 def sheets_ont_passes(registro, sheet_id, start, end):
     try:
         result = sheet.values().get(spreadsheetId=sheet_id, range=f'{registro}!E{start}:E{end}').execute()
-        return result['values']
+        values = result.get('values', [])  # Obtener la lista de valores, o una lista vacía si no hay valores
+
+        if not values:
+            print('La celda está vacía en la hoja de cálculo.')
+            return None
+        else:
+            return values
     except Exception as e:
         print('Error, no se pudo conectar al servidor de Google Sheets. Revisa tu conexión y vuelve a intentarlo')
         print(e)
@@ -34,6 +40,7 @@ def sheets_ont_passes(registro, sheet_id, start, end):
 
 # Google sheets, grabación de datos
 def update_data(registro, column, sheet_id, number, output_data):
+    sheet.values().clear(spreadsheetId=sheet_id, range=f'{registro}!{column}{number + 1}').execute()
     sheet.values().update(spreadsheetId=sheet_id,
                           range=f'{registro}!{column}{number+1}', valueInputOption="USER_ENTERED",
                           body={"values": output_data}).execute()
@@ -41,6 +48,7 @@ def update_data(registro, column, sheet_id, number, output_data):
 
 # Google sheets, grabación de contraseña
 def update_pass(registro, sheet_id, number, column, output_pass):
+    sheet.values().clear(spreadsheetId=sheet_id, range=f'{registro}!{column}{number + 1}').execute()
     sheet.values().update(spreadsheetId=sheet_id,
                           range=f'{registro}!{column}{number+1}', valueInputOption="USER_ENTERED",
                           body={"values": output_pass}).execute()
@@ -187,7 +195,7 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
                 # Agregar que se trata de un modelo 8115 en el registro
                 set_8115 = [['True']]
                 if model == 1:
-                    update_pass(registro, sheet_id, modem_number, 'G', set_8115)
+                    update_pass(registro, sheet_id, modem_number, 'H', set_8115)
 
                 # Continuar con la ejecución
                 if model != 5:
@@ -196,7 +204,7 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
                     configurador.cambios_varios()
 
                 # Obtener contraseña wifi de fábrica y la generada aleatoriamente
-                column_values = ['E', 'C']
+                column_values = ['G', 'C']
 
                 if model != 5:
                     output_pass = configurador.cambio_2g()
@@ -285,7 +293,7 @@ def configurar_marco_trabajo(reg_dict):
     # Declarar el registro a utilizar
     while True:
         # Verificar si el registro existe
-        registro = input(f"¿Qué registro usar? {'/'.join(reg_dict.keys())}: ").lower()
+        registro = input(f"¿Qué registro usar? {'/'.join(reg_dict.keys())}: ").upper()
 
         if registro in reg_dict:
             # El usuario ingresó una llave válida

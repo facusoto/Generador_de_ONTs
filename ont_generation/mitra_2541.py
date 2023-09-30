@@ -1,5 +1,5 @@
-import random
 import time
+import random
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -99,8 +99,8 @@ class Init2541:
                 print("No se pudo acceder y obtener los datos")
 
             # Formatea las cadenas de texto de manera más clara
-            self.gpon = f"{gpon_element.upper().replace('-', '')}"
-            self.mac = f"{mac_element.upper().replace(':', '')}"
+            self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+            self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
             self.potencia = int(''.join(filter(str.isdigit, potencia_element))[:3])
 
             # Verifica si no hay potencia y hace un break

@@ -50,8 +50,8 @@ class InitZTE:
         driver = self.driver
 
         try:
-            driver.get('http://192.168.1.100')
-            print("Ingresando a 192.168.1.100")
+            driver.get('http://192.168.1.1')
+            print("Ingresando a 192.168.1.1")
 
         except WebDriverException as e:
             # Verifica si el mensaje de error contiene "ERR_CONNECTION_TIMED_OUT"
@@ -99,7 +99,7 @@ class InitZTE:
 
         # Valor MAC
         mac_element = self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="cWorkIFMac:0"]'))).text
-        self.mac = f"{mac_element.upper().replace(':', '')}"
+        self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
         # ----------
         # Obtener GPON SN
@@ -112,7 +112,7 @@ class InitZTE:
                 gpon_element = driver.find_element_by_xpath('//*[@id="Sn"]')
                 gpon_value = gpon_element.get_attribute('value')
                 if gpon_value is not None:
-                    self.gpon = f"{gpon_value.upper().replace('-', '')}"
+                    self.gpon = [[f"{gpon_value.upper().replace('-', '')}"]]
                     break
                 else:
                     time.sleep(1)

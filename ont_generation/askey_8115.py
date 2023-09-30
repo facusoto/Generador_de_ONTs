@@ -64,8 +64,8 @@ class Init8115:
             mac_element = driver.find_element_by_xpath('//*[@id="tdMac"]').text
 
             # Formatea las cadenas de texto de manera más clara
-            self.gpon = f"{gpon_element.upper().replace('-', '')}"
-            self.mac = f"{mac_element.upper().replace(':', '')}"
+            self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+            self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
             # Setear valores para ciclo que obtenga un valor correcto de potencia
             sin_potencia = "--- dBm"
