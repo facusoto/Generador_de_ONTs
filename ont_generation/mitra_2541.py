@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 class Init2541:
-    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g):
+    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
         chrome_options = Options()
@@ -36,6 +36,7 @@ class Init2541:
         self.wanMod = wanMod
         self.wifiMod = wifiMod
         self.wifiMod5g = wifiMod5g
+        self.previous_pass = previous_pass
 
         # Configuración de datos obtenidos
         self.gpon = None
@@ -45,6 +46,8 @@ class Init2541:
         self.base_frame = None
         self.menu_frame = None
         self.numero_aleatorio = random.randint(10000000, 99999999)
+        self.numero_aleatorio = previous_pass if self.previous_pass is not None else random.randint(10000000, 99999999)
+
 
     def obtener_datos(self):
         driver = self.driver
@@ -99,7 +102,8 @@ class Init2541:
                 print("No se pudo acceder y obtener los datos")
 
             # Formatea las cadenas de texto de manera más clara
-            self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+            self.gpon = f"{gpon_element.upper().replace('-', '')}"
+            self.gpon = [[f"{self.gpon.replace('4D535443', 'MSTC')}"]]
             self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
             self.potencia = int(''.join(filter(str.isdigit, potencia_element))[:3])
 

@@ -13,7 +13,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 class Init2741:
-    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g):
+    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
         chrome_options = Options()
@@ -37,6 +37,7 @@ class Init2741:
         self.wanMod = wanMod
         self.wifiMod = wifiMod
         self.wifiMod5g = wifiMod5g
+        self.previous_pass = previous_pass
 
         # Configuración de datos obtenidos
         self.gpon = None
@@ -44,7 +45,7 @@ class Init2741:
         self.potencia = None
         self.output_pass = None
         self.base_frame = None
-        self.numero_aleatorio = random.randint(10000000, 99999999)
+        self.numero_aleatorio = previous_pass if self.previous_pass is not None else random.randint(10000000, 99999999)
 
     def obtener_datos(self):
         driver = self.driver
@@ -80,7 +81,8 @@ class Init2741:
                 potencia_element = driver.find_element_by_xpath('//*[@id="opticalRX"]').text
 
                 # Formatea las cadenas de texto de manera más clara
-                self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+                self.gpon = f"{gpon_element.upper().replace('-', '')}"
+                self.gpon = [[f"{self.gpon.replace('4D535443', 'MSTC')}"]]
                 self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
                 # Obtiene el valor de potencia, si es 40 lo reemplaza por 0

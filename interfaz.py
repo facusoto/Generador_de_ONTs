@@ -38,6 +38,23 @@ def sheets_ont_passes(registro, sheet_id, start, end):
         raise SystemExit
 
 
+# Checkear si existe una contraseña de wifi previa
+def check_previous_pass(registro, sheet_id, number):
+    try:
+        result = sheet.values().get(spreadsheetId=sheet_id, range=f'{registro}!C{number + 1}').execute()
+        values = result.get('values', [])  # Obtener la lista de valores, o una lista vacía si no hay valores
+
+        if not values:
+            print('No existe contraseña de Wifi previa, se generará una.')
+            return None
+        else:
+            return values
+    except Exception as e:
+        print('Error, no se pudo conectar al servidor de Google Sheets. Revisa tu conexión y vuelve a intentarlo')
+        print(e)
+        raise SystemExit
+
+
 # Google sheets, grabación de datos
 def update_data(registro, column, sheet_id, number, output_data):
     sheet.values().clear(spreadsheetId=sheet_id, range=f'{registro}!{column}{number + 1}').execute()
@@ -150,11 +167,11 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
 
     # Crear un diccionario para mapear modelos a sus detalles
     modelo_detalles = {
-        1: {"Modelo": "Askey 8115", "Wan service": f"askey{registro.lower()}{modem_number}", "Clase": Init8115},
-        2: {"Modelo": "Askey 3505", "Wan service": f"askey{registro.lower()}{modem_number}", "Clase": Init3505},
-        3: {"Modelo": "Mitra 2541", "Wan service": f"mitra{registro.lower()}{modem_number}", "Clase": Init2541},
-        4: {"Modelo": "Mitra 2741", "Wan service": f"mitra{registro.lower()}{modem_number}", "Clase": Init2741},
-        5: {"Modelo": "ZTE", "Wan service": f"zte{registro.lower()}{modem_number}", "Clase": InitZTE}
+        1: {"Modelo": "Askey 8115", "Wan service": f"{registro.upper()}{modem_number}", "Clase": Init8115},
+        2: {"Modelo": "Askey 3505", "Wan service": f"{registro.upper()}{modem_number}", "Clase": Init3505},
+        3: {"Modelo": "Mitra 2541", "Wan service": f"{registro.upper()}{modem_number}", "Clase": Init2541},
+        4: {"Modelo": "Mitra 2741", "Wan service": f"{registro.upper()}{modem_number}", "Clase": Init2741},
+        5: {"Modelo": "ZTE", "Wan service": f"{registro.upper()}{modem_number}", "Clase": InitZTE}
     }
 
     # Imprimir datos del módem basado en el modelo
@@ -171,8 +188,13 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
         print("Modelo:", detalles["Modelo"])
         print("Wan service:", detalles["Wan service"])
 
+        # Verifica la existencia de una contraseña de wifi previa
+        previous_pass = check_previous_pass(registro, sheet_id, modem_number)
+        if previous_pass is not None:
+            previous_pass = int(previous_pass[0][0])
+
         # Crea una instancia de la clase correspondiente, ejecuta la configuración y obtiene los datos
-        configurador = detalles["Clase"](modem_number, ontpass, detalles["Wan service"], wifi2g, wifi5g)
+        configurador = detalles["Clase"](modem_number, ontpass, detalles["Wan service"], wifi2g, wifi5g, previous_pass)
 
         # Método para obtener los datos del modelo
         resultado = configurador.obtener_datos()

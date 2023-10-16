@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 class Init8115:
-    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g):
+    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
         chrome_options = Options()
@@ -35,13 +35,14 @@ class Init8115:
         self.wanMod = wanMod
         self.wifiMod = wifiMod
         self.wifiMod5g = wifiMod5g
+        self.previous_pass = previous_pass
 
         # Configuración de datos obtenidos
         self.gpon = None
         self.mac = None
         self.potencia = None
         self.output_pass = None
-        self.numero_aleatorio = random.randint(10000000, 99999999)
+        self.numero_aleatorio = previous_pass if self.previous_pass is not None else random.randint(10000000, 99999999)
 
     def obtener_datos(self):
         driver = self.driver
@@ -64,7 +65,15 @@ class Init8115:
             mac_element = driver.find_element_by_xpath('//*[@id="tdMac"]').text
 
             # Formatea las cadenas de texto de manera más clara
-            self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+            self.gpon = f"{gpon_element.upper().replace('-', '')}"
+
+            if "46414D41" in self.gpon:
+                self.gpon = [[f"{self.gpon.replace('46414D41', 'FAMA')}"]]
+            elif "41534B59" in self.gpon:
+                self.gpon = [[f"{self.gpon.replace('41534B59', 'ASKY')}"]]
+            else:
+                print('Error')
+
             self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
             # Setear valores para ciclo que obtenga un valor correcto de potencia
@@ -87,7 +96,7 @@ class Init8115:
 
             # Si no se obtuvo la potencia (y, por lo tanto, continúa en None) la establece en 0
             if self.potencia is None:
-                self.potencia = 0
+                self.potencia = 220
 
             # Verifica si no hay potencia y hace un break
             for cuenta in range(1):
@@ -160,67 +169,74 @@ class Init8115:
 
     def cambio_wan(self):
         driver = self.driver
-        driver.get('http://192.168.1.1:8000/wanintf.asp')
 
-        # Obtiene la cantidad total de IP services
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr/td[1]/input')))
-        elementos = driver.find_elements_by_xpath('//tr/td[1]/input')
-        cantidad_total = len(elementos)
+        # Intento de solución a URL que falla al redireccionar
+        driver.execute_script("window.location.href = 'http://192.168.1.1:8000/wanintf.asp';")
 
-        # Verificar si hay más de un elemento
-        if cantidad_total == 0:
-            print('No existen WAN para configurar, error')
-        elif cantidad_total > 1:
-            # Hacer clic en los elementos restantes (si los hay)
-            for elemento in elementos[1:]:
-                elemento.click()
+        while True:
+            if "wanintf.asp" not in driver.current_url:
+                driver.execute_script("window.location.href = 'http://192.168.1.1:8000/wanintf.asp';")
+            else:
+                # Obtiene la cantidad total de IP services
+                self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr/td[1]/input')))
+                elementos = driver.find_elements_by_xpath('//tr/td[1]/input')
+                cantidad_total = len(elementos)
 
-            # Elimina las IP services, excepto el primero
-            driver.find_element_by_id("DelWanIPIntf").click()
+                # Verificar si hay más de un elemento
+                if cantidad_total == 0:
+                    print('No existen WAN para configurar, error')
+                elif cantidad_total > 1:
+                    # Hacer clic en los elementos restantes (si los hay)
+                    for elemento in elementos[1:]:
+                        elemento.click()
 
-            # Una vez hecho continua con la primera
-            wan_interface = driver.find_element_by_xpath('//tr[1]/td[2]/a')
-            wan_interface.click()
+                    # Elimina las IP services, excepto el primero
+                    driver.find_element_by_id("DelWanIPIntf").click()
 
-            # Configuración de la WAN Service
-            vlan_id = driver.find_element_by_name("vlanid")
-            vlan_id.clear()
-            vlan_id.send_keys("10")
+                    # Una vez hecho continua con la primera
+                    wan_interface = driver.find_element_by_xpath('//tr[1]/td[2]/a')
+                    wan_interface.click()
 
-            wan_user = driver.find_element_by_name("username")
-            wan_user.clear()
-            wan_user.send_keys(self.wanMod)
+                    # Configuración de la WAN Service
+                    vlan_id = driver.find_element_by_name("vlanid")
+                    vlan_id.clear()
+                    vlan_id.send_keys("10")
 
-            wan_password = driver.find_element_by_name("password")
-            wan_password.clear()
-            wan_password.send_keys("123456")
+                    wan_user = driver.find_element_by_name("username")
+                    wan_user.clear()
+                    wan_user.send_keys(self.wanMod)
 
-            dns_override = driver.find_element_by_name("dns_override")
-            dns_override.click()
+                    wan_password = driver.find_element_by_name("password")
+                    wan_password.clear()
+                    wan_password.send_keys("123456")
 
-            # Definir un diccionario con nombres y valores
-            elementos_dict = {
-                "dnsv4_svr0-0": "8",
-                "dnsv4_svr0-1": "8",
-                "dnsv4_svr0-2": "8",
-                "dnsv4_svr0-3": "8",
-                "dnsv4_svr1-0": "1",
-                "dnsv4_svr1-1": "1",
-                "dnsv4_svr1-2": "1",
-                "dnsv4_svr1-3": "1"
-            }
+                    dns_override = driver.find_element_by_name("dns_override")
+                    dns_override.click()
 
-            # Iterar a través del diccionario y establecer los valores en los elementos input
-            for nombre, valor in elementos_dict.items():
-                elemento = driver.find_element_by_name(nombre)
-                elemento.clear()
-                elemento.send_keys(valor)
+                    # Definir un diccionario con nombres y valores
+                    elementos_dict = {
+                        "dnsv4_svr0-0": "8",
+                        "dnsv4_svr0-1": "8",
+                        "dnsv4_svr0-2": "8",
+                        "dnsv4_svr0-3": "8",
+                        "dnsv4_svr1-0": "1",
+                        "dnsv4_svr1-1": "1",
+                        "dnsv4_svr1-2": "1",
+                        "dnsv4_svr1-3": "1"
+                    }
 
-            ipv6 = driver.find_element_by_xpath('//input[@name="ipv6_type" and @value="2"]')
-            ipv6.click()
+                    # Iterar a través del diccionario y establecer los valores en los elementos input
+                    for nombre, valor in elementos_dict.items():
+                        elemento = driver.find_element_by_name(nombre)
+                        elemento.clear()
+                        elemento.send_keys(valor)
 
-            driver.find_element_by_xpath("//input[@value='Apply']").click()
-        print("Cambio de WAN")
+                    ipv6 = driver.find_element_by_xpath('//input[@name="ipv6_type" and @value="2"]')
+                    ipv6.click()
+
+                    driver.find_element_by_xpath("//input[@value='Apply']").click()
+                print("Cambio de WAN")
+                break
 
     def cambios_varios(self):
         driver = self.driver

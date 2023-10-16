@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 class InitZTE:
-    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g):
+    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
         chrome_options = Options()
@@ -37,13 +37,14 @@ class InitZTE:
         self.wanMod = wanMod
         self.wifiMod = wifiMod
         self.wifiMod5g = wifiMod5g
+        self.previous_pass = previous_pass
 
         # Configuración de datos obtenidos
         self.gpon = None
         self.mac = None
         self.potencia = None
         self.output_pass = None
-        self.numero_aleatorio = random.randint(10000000, 99999999)
+        self.numero_aleatorio = previous_pass if self.previous_pass is not None else random.randint(10000000, 99999999)
 
     def obtener_datos(self):
         # Ingreso, verificación de potencia y subida de datos de modem

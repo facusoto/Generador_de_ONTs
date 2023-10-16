@@ -13,11 +13,11 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 
 class Init3505:
-    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g):
+    def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
         firefox_options = Options()
-        firefox_options.add_argument("--headless")
+        # firefox_options.add_argument("--headless")
         firefox_options.add_argument("--start-maximized")
         firefox_options.add_argument("--log-level=3")
         firefox_options.add_argument("--silent")
@@ -33,13 +33,14 @@ class Init3505:
         self.wanMod = wanMod
         self.wifiMod = wifiMod
         self.wifiMod5g = wifiMod5g
+        self.previous_pass = previous_pass
 
         # Configuración de datos obtenidos
         self.gpon = None
         self.mac = None
         self.potencia = None
         self.output_pass = None
-        self.numero_aleatorio = random.randint(10000000, 99999999)
+        self.numero_aleatorio = previous_pass if self.previous_pass is not None else random.randint(10000000, 99999999)
 
     def obtener_datos(self):
         driver = self.driver
@@ -108,7 +109,15 @@ class Init3505:
             print("No se pudo acceder y obtener los datos")
 
         # Formatea las cadenas de texto de manera más clara
-        self.gpon = [[f"{gpon_element.upper().replace('-', '')}"]]
+        self.gpon = f"{gpon_element.upper().replace('-', '')}"
+
+        if "46414D41" in self.gpon:
+            self.gpon = [[f"{self.gpon.replace('46414D41', 'FAMA')}"]]
+        elif "41534B59" in self.gpon:
+            self.gpon = [[f"{self.gpon.replace('41534B59', 'ASKY')}"]]
+        else:
+            print('Error')
+
         self.mac = [[f"{mac_element.upper().replace(':', '')}"]]
 
         # Formatea la potencia
