@@ -192,6 +192,10 @@ def ont_config(sheet_id, modem_number, ontpass, registro, model):
         previous_pass = check_previous_pass(registro, sheet_id, modem_number)
         if previous_pass is not None:
             previous_pass = int(previous_pass[0][0])
+            if not re.match(r'^[0-9]{8}$', str(previous_pass)):
+                print('Error')
+            else:
+                print(previous_pass)
 
         # Crea una instancia de la clase correspondiente, ejecuta la configuración y obtiene los datos
         configurador = detalles["Clase"](modem_number, ontpass, detalles["Wan service"], wifi2g, wifi5g, previous_pass)

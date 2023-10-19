@@ -144,7 +144,7 @@ class Init8115:
 
     def cambio_contrasena(self):
         driver = self.driver
-        tecnico = 'Tecnico2018'
+        tecnico = 'Rr2023Fa'
         driver.get('http://192.168.1.1:8000/user_profile.asp')
 
         if self.contrasenaMod != tecnico:

@@ -3,27 +3,30 @@ import random
 import requests
 
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, NoAlertPresentException
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
-from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 class Init3505:
     def __init__(self, numeroMod, contrasenaMod, wanMod, wifiMod, wifiMod5g, previous_pass):
 
         # Configuraciónes previas al instanciado
-        firefox_options = Options()
-        # firefox_options.add_argument("--headless")
-        firefox_options.add_argument("--start-maximized")
-        firefox_options.add_argument("--log-level=3")
-        firefox_options.add_argument("--silent")
+        chrome_options = Options()
+        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--start-maximized")
+        chrome_options.add_argument("--disable-logging")
+        chrome_options.add_argument("--output=/dev/null")
+        chrome_options.add_argument("--log-level=3")
+        chrome_options.add_argument("--silent")
+        chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
         # Crea una instancia del controlador de Chrome con las opciones configuradas
-        self.driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=firefox_options)
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
         # Configura el tiempo de espera
         self.wait = WebDriverWait(self.driver, 30)
 
@@ -178,7 +181,7 @@ class Init3505:
     def cambio_contrasena(self):
         driver = self.driver
         driver.get('http://192.168.1.1:8000/password.html')
-        tecnico = "Tecnico2018"
+        tecnico = "Rr2023Fa"
 
         # Frame Menu (Management)
         if self.contrasenaMod != tecnico:

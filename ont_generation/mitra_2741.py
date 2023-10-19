@@ -456,7 +456,7 @@ class Init2741:
 
     def cambio_contrasena(self):
         driver = self.driver
-        tecnico = 'Tecnico2018'
+        tecnico = 'Rr2023Fa'
         driver.get('http://192.168.1.1:8000/cgi-bin/indexmain.cgi')
 
         # Frame Menu (Maintenance Interface)

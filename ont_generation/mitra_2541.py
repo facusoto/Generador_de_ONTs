@@ -362,7 +362,7 @@ class Init2541:
         driver.execute_script(f"arguments[0].src = '{new_url}';", self.base_frame)
         driver.switch_to.frame(self.base_frame)
 
-        tecnico = "Tecnico2018"
+        tecnico = "Rr2023Fa"
         if self.contrasenaMod != tecnico:
             try:
                 driver.find_element_by_name("userName").send_keys("admin")

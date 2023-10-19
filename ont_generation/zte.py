@@ -426,7 +426,7 @@ class InitZTE:
     def cambio_contrasena(self):
         # Acá se cambia la contraseña de fábrica
         driver = self.driver
-        tecnico = 'Tecnico2018'
+        tecnico = 'Rr2023Fa'
 
         # Menú management & diagnosis
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="mgrAndDiag"]'))).click()
